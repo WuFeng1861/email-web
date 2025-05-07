@@ -88,7 +88,7 @@ export default {
     text: '纯文本',
     preview: '预览',
     templateVariables: '模板变量',
-    variableDesc: '使用双花括号包围变量名，如 {{userName}}'
+    variableDesc: '使用双花括号包围变量名，如 {first}userName{second}'
   },
   emailSending: {
     send: '发送邮件',

@@ -88,7 +88,7 @@ export default {
     text: 'Plain Text',
     preview: 'Preview',
     templateVariables: 'Template Variables',
-    variableDesc: 'Use double curly braces to surround variable names, e.g. {{userName}}'
+    variableDesc: 'Use double curly braces to surround variable names, e.g. {first}userName{second}'
   },
   emailSending: {
     send: 'Send Email',

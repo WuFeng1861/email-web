@@ -48,13 +48,13 @@ const columns = [
   { key: 'id', label: 'ID' },
   { key: 'name', label: t('emailTemplates.name') },
   { key: 'subject', label: t('emailTemplates.subject') },
-  { 
-    key: 'type', 
+  {
+    key: 'type',
     label: t('emailTemplates.type'),
     formatter: (value: string) => t(`emailTemplates.${value}`)
   },
-  { 
-    key: 'createdAt', 
+  {
+    key: 'createdAt',
     label: t('emailTemplates.createdAt'),
     formatter: (value: string) => new Date(value).toLocaleString()
   }
@@ -84,7 +84,7 @@ const resetForm = () => {
   formData.subject = ''
   formData.content = ''
   formData.type = 'html'
-  
+
   formErrors.name = ''
   formErrors.subject = ''
   formErrors.content = ''
@@ -102,14 +102,14 @@ const openEditModal = async (id: number) => {
   try {
     currentTemplateId.value = id
     actionLoading.value = true
-    
+
     const templateData = await getEmailTemplate(id)
-    
+
     formData.name = templateData.name
     formData.subject = templateData.subject
     formData.content = templateData.content
     formData.type = templateData.type
-    
+
     isEditMode.value = true
     showModal.value = true
   } catch (error) {
@@ -124,14 +124,14 @@ const openPreviewModal = async (id: number) => {
   try {
     currentTemplateId.value = id
     actionLoading.value = true
-    
+
     const templateData = await getEmailTemplate(id)
-    
+
     formData.name = templateData.name
     formData.subject = templateData.subject
     formData.content = templateData.content
     formData.type = templateData.type
-    
+
     showPreviewModal.value = true
   } catch (error) {
     console.error('获取模板详情失败:', error)
@@ -149,7 +149,7 @@ const openDeleteModal = (id: number) => {
 // 验证表单
 const validateForm = (): boolean => {
   let isValid = true
-  
+
   // 验证名称
   if (!formData.name) {
     formErrors.name = t('emailTemplates.name') + ' ' + t('common.required')
@@ -157,7 +157,7 @@ const validateForm = (): boolean => {
   } else {
     formErrors.name = ''
   }
-  
+
   // 验证主题
   if (!formData.subject) {
     formErrors.subject = t('emailTemplates.subject') + ' ' + t('common.required')
@@ -165,7 +165,7 @@ const validateForm = (): boolean => {
   } else {
     formErrors.subject = ''
   }
-  
+
   // 验证内容
   if (!formData.content) {
     formErrors.content = t('emailTemplates.content') + ' ' + t('common.required')
@@ -173,17 +173,17 @@ const validateForm = (): boolean => {
   } else {
     formErrors.content = ''
   }
-  
+
   return isValid
 }
 
 // 提交表单
 const submitForm = async () => {
   if (!validateForm()) return
-  
+
   try {
     actionLoading.value = true
-    
+
     if (isEditMode.value && currentTemplateId.value) {
       // 更新邮件模板
       await updateEmailTemplate(currentTemplateId.value, formData)
@@ -193,7 +193,7 @@ const submitForm = async () => {
       await createEmailTemplate(formData)
       alert(t('emailTemplates.createSuccess'))
     }
-    
+
     showModal.value = false
     fetchEmailTemplates()
   } catch (error) {
@@ -206,7 +206,7 @@ const submitForm = async () => {
 // 删除邮件模板
 const confirmDelete = async () => {
   if (!currentTemplateId.value) return
-  
+
   try {
     actionLoading.value = true
     await deleteEmailTemplate(currentTemplateId.value)
@@ -236,29 +236,29 @@ onMounted(() => {
         {{ t('common.add') }}
       </button>
     </div>
-    
-    <DataTable 
-      :columns="columns" 
-      :data="emailTemplates" 
+
+    <DataTable
+      :columns="columns"
+      :data="emailTemplates"
       :loading="loading"
       :empty-text="t('common.noData')"
     >
       <template #actions="{ row }">
         <div class="flex space-x-2 justify-end">
-          <button 
-            @click="openPreviewModal(row.id)" 
+          <button
+            @click="openPreviewModal(row.id)"
             class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
           >
             {{ t('emailTemplates.preview') }}
           </button>
-          <button 
-            @click="openEditModal(row.id)" 
+          <button
+            @click="openEditModal(row.id)"
             class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
           >
             {{ t('common.edit') }}
           </button>
-          <button 
-            @click="openDeleteModal(row.id)" 
+          <button
+            @click="openDeleteModal(row.id)"
             class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
           >
             {{ t('common.delete') }}
@@ -266,9 +266,9 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
-    
+
     <!-- 创建/编辑模态框 -->
-    <BaseModal 
+    <BaseModal
       :show="showModal"
       :title="isEditMode ? t('emailTemplates.edit') : t('emailTemplates.create')"
       width="max-w-2xl w-full"
@@ -282,7 +282,7 @@ onMounted(() => {
           :error="formErrors.name"
           required
         />
-        
+
         <FormInput
           v-model="formData.subject"
           :label="t('emailTemplates.subject')"
@@ -290,14 +290,14 @@ onMounted(() => {
           :error="formErrors.subject"
           required
         />
-        
+
         <FormSelect
           v-model="formData.type"
           :options="contentTypeOptions"
           :label="t('emailTemplates.type')"
           required
         />
-        
+
         <FormTextarea
           v-model="formData.content"
           :label="t('emailTemplates.content')"
@@ -306,17 +306,17 @@ onMounted(() => {
           :rows="10"
           required
         />
-        
+
         <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-md">
           <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {{ t('emailTemplates.templateVariables') }}
           </h4>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            {{ t('emailTemplates.variableDesc') }}
+            {{ t('emailTemplates.variableDesc', {first: '\{\{', second: '\}\}'}) }}
           </p>
         </div>
       </form>
-      
+
       <template #footer>
         <div class="flex justify-end space-x-3">
           <button @click="showModal = false" class="btn btn-secondary">
@@ -335,9 +335,9 @@ onMounted(() => {
         </div>
       </template>
     </BaseModal>
-    
+
     <!-- 预览模态框 -->
-    <BaseModal 
+    <BaseModal
       :show="showPreviewModal"
       :title="t('emailTemplates.preview')"
       width="max-w-2xl w-full"
@@ -347,12 +347,12 @@ onMounted(() => {
         <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">{{ formData.name }}</h3>
         <p class="text-gray-600 dark:text-gray-400">{{ formData.subject }}</p>
       </div>
-      
+
       <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 min-h-[200px] overflow-auto">
         <div v-if="formData.type === 'html'" v-html="formData.content"></div>
         <pre v-else class="whitespace-pre-wrap">{{ formData.content }}</pre>
       </div>
-      
+
       <template #footer>
         <div class="flex justify-end">
           <button @click="showPreviewModal = false" class="btn btn-secondary">
@@ -361,15 +361,15 @@ onMounted(() => {
         </div>
       </template>
     </BaseModal>
-    
+
     <!-- 删除确认模态框 -->
-    <BaseModal 
+    <BaseModal
       :show="showDeleteModal"
       :title="t('common.confirm')"
       @close="showDeleteModal = false"
     >
       <p class="text-gray-600 dark:text-gray-300">{{ t('emailTemplates.deleteConfirm') }}</p>
-      
+
       <template #footer>
         <div class="flex justify-end space-x-3">
           <button @click="showDeleteModal = false" class="btn btn-secondary">
