@@ -47,20 +47,20 @@ const columns = [
   { key: 'id', label: 'ID' },
   { key: 'user', label: t('emailKeys.user') },
   { key: 'app', label: t('emailKeys.app') },
-  { 
-    key: 'emailCompany', 
+  {
+    key: 'emailCompany',
     label: t('emailKeys.emailCompany'),
     formatter: (value: string) => t(`emailKeys.${value}`)
   },
   { key: 'limitCount', label: t('emailKeys.limitCount') },
   { key: 'sentCount', label: t('emailKeys.sentCount') },
-  { 
-    key: 'lastResetDate', 
+  {
+    key: 'lastResetDate',
     label: t('emailKeys.lastResetDate'),
     formatter: (value: string) => value ? new Date(value).toLocaleDateString() : '-'
   },
-  { 
-    key: 'createdAt', 
+  {
+    key: 'createdAt',
     label: t('emailKeys.createdAt'),
     formatter: (value: string) => new Date(value).toLocaleString()
   }
@@ -70,6 +70,7 @@ const columns = [
 const emailCompanyOptions = [
   { value: 'QQ', label: t('emailKeys.QQ') },
   { value: '163', label: t('emailKeys.163') },
+  { value: '163Self', label: t('emailKeys.163Self') },
   { value: 'ali', label: t('emailKeys.ali') },
   { value: 'gmail', label: t('emailKeys.gmail') },
   { value: 'outlook', label: t('emailKeys.outlook') },
@@ -95,7 +96,7 @@ const resetForm = () => {
   formData.app = ''
   formData.emailCompany = 'QQ'
   formData.limitCount = 1000
-  
+
   formErrors.user = ''
   formErrors.pass = ''
   formErrors.app = ''
@@ -114,15 +115,15 @@ const openEditModal = async (id: number) => {
   try {
     currentKeyId.value = id
     actionLoading.value = true
-    
+
     const keyData = await getEmailKey(id)
-    
+
     formData.user = keyData.user
     formData.pass = keyData.pass
     formData.app = keyData.app
     formData.emailCompany = keyData.emailCompany
     formData.limitCount = keyData.limitCount
-    
+
     isEditMode.value = true
     showModal.value = true
   } catch (error) {
@@ -141,7 +142,7 @@ const openDeleteModal = (id: number) => {
 // 验证表单
 const validateForm = (): boolean => {
   let isValid = true
-  
+
   // 验证用户名
   if (!formData.user) {
     formErrors.user = t('emailKeys.user') + ' ' + t('common.required')
@@ -149,7 +150,7 @@ const validateForm = (): boolean => {
   } else {
     formErrors.user = ''
   }
-  
+
   // 验证密码
   if (!formData.pass) {
     formErrors.pass = t('emailKeys.pass') + ' ' + t('common.required')
@@ -157,7 +158,7 @@ const validateForm = (): boolean => {
   } else {
     formErrors.pass = ''
   }
-  
+
   // 验证应用名称
   if (!formData.app) {
     formErrors.app = t('emailKeys.app') + ' ' + t('common.required')
@@ -165,7 +166,7 @@ const validateForm = (): boolean => {
   } else {
     formErrors.app = ''
   }
-  
+
   // 验证限制数量
   if (!formData.limitCount || formData.limitCount <= 0) {
     formErrors.limitCount = t('emailKeys.limitCount') + ' ' + t('common.required')
@@ -173,17 +174,17 @@ const validateForm = (): boolean => {
   } else {
     formErrors.limitCount = ''
   }
-  
+
   return isValid
 }
 
 // 提交表单
 const submitForm = async () => {
   if (!validateForm()) return
-  
+
   try {
     actionLoading.value = true
-    
+
     if (isEditMode.value && currentKeyId.value) {
       // 更新邮件凭证
       await updateEmailKey(currentKeyId.value, formData)
@@ -193,7 +194,7 @@ const submitForm = async () => {
       await createEmailKey(formData)
       alert(t('emailKeys.createSuccess'))
     }
-    
+
     showModal.value = false
     fetchEmailKeys()
   } catch (error) {
@@ -206,7 +207,7 @@ const submitForm = async () => {
 // 删除邮件凭证
 const confirmDelete = async () => {
   if (!currentKeyId.value) return
-  
+
   try {
     actionLoading.value = true
     await deleteEmailKey(currentKeyId.value)
@@ -236,23 +237,23 @@ onMounted(() => {
         {{ t('common.add') }}
       </button>
     </div>
-    
-    <DataTable 
-      :columns="columns" 
-      :data="emailKeys" 
+
+    <DataTable
+      :columns="columns"
+      :data="emailKeys"
       :loading="loading"
       :empty-text="t('common.noData')"
     >
       <template #actions="{ row }">
         <div class="flex space-x-2 justify-end">
-          <button 
-            @click="openEditModal(row.id)" 
+          <button
+            @click="openEditModal(row.id)"
             class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
           >
             {{ t('common.edit') }}
           </button>
-          <button 
-            @click="openDeleteModal(row.id)" 
+          <button
+            @click="openDeleteModal(row.id)"
             class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
           >
             {{ t('common.delete') }}
@@ -260,9 +261,9 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
-    
+
     <!-- 创建/编辑模态框 -->
-    <BaseModal 
+    <BaseModal
       :show="showModal"
       :title="isEditMode ? t('emailKeys.edit') : t('emailKeys.create')"
       @close="showModal = false"
@@ -275,7 +276,7 @@ onMounted(() => {
           :error="formErrors.user"
           required
         />
-        
+
         <FormInput
           v-model="formData.pass"
           type="password"
@@ -284,7 +285,7 @@ onMounted(() => {
           :error="formErrors.pass"
           required
         />
-        
+
         <FormInput
           v-model="formData.app"
           :label="t('emailKeys.app')"
@@ -292,14 +293,14 @@ onMounted(() => {
           :error="formErrors.app"
           required
         />
-        
+
         <FormSelect
           v-model="formData.emailCompany"
           :options="emailCompanyOptions"
           :label="t('emailKeys.emailCompany')"
           required
         />
-        
+
         <FormInput
           v-model="formData.limitCount"
           type="number"
@@ -309,7 +310,7 @@ onMounted(() => {
           required
         />
       </form>
-      
+
       <template #footer>
         <div class="flex justify-end space-x-3">
           <button @click="showModal = false" class="btn btn-secondary">
@@ -328,15 +329,15 @@ onMounted(() => {
         </div>
       </template>
     </BaseModal>
-    
+
     <!-- 删除确认模态框 -->
-    <BaseModal 
+    <BaseModal
       :show="showDeleteModal"
       :title="t('common.confirm')"
       @close="showDeleteModal = false"
     >
       <p class="text-gray-600 dark:text-gray-300">{{ t('emailKeys.deleteConfirm') }}</p>
-      
+
       <template #footer>
         <div class="flex justify-end space-x-3">
           <button @click="showDeleteModal = false" class="btn btn-secondary">

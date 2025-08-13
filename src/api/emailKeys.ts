@@ -6,7 +6,7 @@ export interface EmailKey {
   user: string
   pass: string
   app: string
-  emailCompany: 'QQ' | '163' | 'ali' | 'gmail' | 'outlook' | 'other'
+  emailCompany: 'QQ' | '163' | 'ali' | 'gmail' | 'outlook' | 'other'| "163Self"
   limitCount: number
   sentCount?: number
   lastResetDate?: string
