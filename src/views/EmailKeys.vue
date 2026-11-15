@@ -119,7 +119,8 @@ const openEditModal = async (id: number) => {
     const keyData = await getEmailKey(id)
 
     formData.user = keyData.user
-    formData.pass = keyData.pass
+    // 后端不再返回明文授权码，编辑时留空表示不修改
+    formData.pass = ''
     formData.app = keyData.app
     formData.emailCompany = keyData.emailCompany
     formData.limitCount = keyData.limitCount
@@ -151,8 +152,8 @@ const validateForm = (): boolean => {
     formErrors.user = ''
   }
 
-  // 验证密码
-  if (!formData.pass) {
+  // 授权码：新建必填；编辑留空 = 保持原值
+  if (!isEditMode.value && !formData.pass) {
     formErrors.pass = t('emailKeys.pass') + ' ' + t('common.required')
     isValid = false
   } else {
@@ -186,8 +187,10 @@ const submitForm = async () => {
     actionLoading.value = true
 
     if (isEditMode.value && currentKeyId.value) {
-      // 更新邮件凭证
-      await updateEmailKey(currentKeyId.value, formData)
+      // 更新邮件凭证：授权码留空就不提交该字段
+      const payload = { ...formData }
+      if (!String(payload.pass || '').trim()) delete (payload as Partial<typeof payload>).pass
+      await updateEmailKey(currentKeyId.value, payload)
       alert(t('emailKeys.updateSuccess'))
     } else {
       // 创建邮件凭证
@@ -281,9 +284,9 @@ onMounted(() => {
           v-model="formData.pass"
           type="password"
           :label="t('emailKeys.pass')"
-          :placeholder="t('emailKeys.pass')"
+          :placeholder="isEditMode ? '留空则不修改（后端不再返回明文）' : t('emailKeys.pass')"
           :error="formErrors.pass"
-          required
+          :required="!isEditMode"
         />
 
         <FormInput

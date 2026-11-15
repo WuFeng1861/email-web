@@ -11,9 +11,30 @@ export interface EmailTemplate {
   updatedAt?: string
 }
 
-// 获取所有邮件模板
-export const getAllEmailTemplates = () => {
-  return api.get<EmailTemplate[]>('/email-templates')
+export interface PageMeta {
+  totalItems: number
+  itemCount: number
+  itemsPerPage: number
+  totalPages: number
+  currentPage: number
+}
+
+export interface TemplatePage {
+  items: EmailTemplate[]
+  meta: PageMeta
+}
+
+/** 分页查询（列表页用） */
+export const getEmailTemplatesPage = (page = 1, limit = 20) =>
+  api.get('/email-templates', { params: { page, limit } }) as unknown as Promise<TemplatePage>
+
+/**
+ * 取全部模板（下拉选用）。
+ * 后端单页上限 100，模板量不大，取一页足够；超过 100 条要改成翻页累加。
+ */
+export const getAllEmailTemplates = async (): Promise<EmailTemplate[]> => {
+  const res = await getEmailTemplatesPage(1, 100)
+  return res.items
 }
 
 // 获取特定邮件模板

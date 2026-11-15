@@ -1,43 +1,80 @@
 import axios from 'axios'
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
-// 创建axios实例
-const api = axios.create({
-  baseURL: 'https://wufeng98.cn/emailServerApi/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
+/**
+ * 后端基地址：优先取 VITE_API_BASE_URL，没配就用生产路径。
+ * 本地开发可在 .env.local 里写 VITE_API_BASE_URL=http://127.0.0.1:5777/api
+ */
+const BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
+  'https://wufeng98.cn/emailServerApi/api'
+
+/** 前端挂在 /emailWeb/ 下，登录页也在这个前缀里 */
+const APP_BASE = '/emailWeb/'
+
+const TOKEN_KEY = 'email_admin_token'
+
+export const getToken = (): string => localStorage.getItem(TOKEN_KEY) || ''
+export const setToken = (token: string): void => localStorage.setItem(TOKEN_KEY, token)
+export const clearToken = (): void => localStorage.removeItem(TOKEN_KEY)
+
+/** token 失效时统一跳登录页（避免多处重复写） */
+export function redirectToLogin(): void {
+  clearToken()
+  if (!window.location.pathname.startsWith(`${APP_BASE}login`)) {
+    window.location.replace(`${APP_BASE}login`)
   }
+}
+
+export interface ApiError {
+  status?: number
+  message: string
+  raw?: unknown
+}
+
+/** 后端错误体可能是 { message: string } 或 { message: string[] } */
+function pickMessage(data: unknown): string {
+  const raw = (data as { message?: unknown } | undefined)?.message
+  if (Array.isArray(raw)) return String(raw[0] ?? '')
+  if (typeof raw === 'string') return raw
+  return ''
+}
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' }
 })
 
-// 请求拦截器
-api.interceptors.request.use(
-  config => {
-    // 这里可以添加一些请求前的处理，比如添加token等
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
-)
+// 所有管理接口都要带 token
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = getToken()
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 
-// 响应拦截器
 api.interceptors.response.use(
-  response => {
-    return response.data
-  },
-  error => {
-    // 处理错误响应
-    if (error.response) {
-      // 服务器返回错误响应
-      console.error('API错误:', error.response.data)
-    } else if (error.request) {
-      // 请求已发送，但没有收到响应
-      console.error('网络错误:', error.request)
-    } else {
-      // 设置请求时发生错误
-      console.error('请求错误:', error.message)
+  response => response.data,
+  (error: AxiosError) => {
+    const status = error.response?.status
+    let message = pickMessage(error.response?.data)
+
+    if (status === 401) {
+      redirectToLogin()
+      message = message || '登录已过期，请重新登录'
+    } else if (status === 403) {
+      // IP 黑白名单拦截：登录也没用，只提示不跳转
+      message = message || '来源 IP 已被限制访问'
+    } else if (status === 429) {
+      message = message || '操作过于频繁，请稍后再试'
+    } else if (status === 400) {
+      message = message || '请求参数有误'
+    } else if (!error.response) {
+      message = error.code === 'ECONNABORTED' ? '请求超时' : '无法连接到服务器'
     }
-    return Promise.reject(error)
+
+    if (message) console.warn('[api]', status ?? '-', message)
+    return Promise.reject({ status, message, raw: error } as ApiError)
   }
 )
 

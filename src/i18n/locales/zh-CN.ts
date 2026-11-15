@@ -26,7 +26,10 @@ export default {
     emailKeys: '邮件凭证',
     emailTemplates: '邮件模板',
     emailSending: '发送邮件',
-    statistics: '统计数据'
+    statistics: 统计数据,
+    ipSecurity: 'IP 名单',
+    login: '登录',
+    account: '账号设置'
   },
   dashboard: {
     emailQueueStats: '邮件队列统计',

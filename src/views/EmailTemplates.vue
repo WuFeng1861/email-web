@@ -7,7 +7,7 @@ import BaseModal from '../components/BaseModal.vue'
 import FormInput from '../components/FormInput.vue'
 import FormSelect from '../components/FormSelect.vue'
 import FormTextarea from '../components/FormTextarea.vue'
-import { getAllEmailTemplates, getEmailTemplate, createEmailTemplate, updateEmailTemplate, deleteEmailTemplate, EmailTemplate } from '../api/emailTemplates'
+import { getEmailTemplatesPage, getAllEmailTemplates, getEmailTemplate, createEmailTemplate, updateEmailTemplate, deleteEmailTemplate, EmailTemplate } from '../api/emailTemplates'
 
 const { t } = useI18n()
 
@@ -66,16 +66,40 @@ const contentTypeOptions = [
   { value: 'text', label: t('emailTemplates.text') }
 ]
 
-// 获取所有邮件模板
+// 分页参数（后端已改为分页返回，全量拉取会拖慢列表页）
+const page = ref(1)
+const pageSize = 20
+const total = ref(0)
+
 const fetchEmailTemplates = async () => {
   try {
     loading.value = true
-    emailTemplates.value = await getAllEmailTemplates()
+    const res = await getEmailTemplatesPage(page.value, pageSize)
+    emailTemplates.value = res.items
+    total.value = res.meta.totalItems
   } catch (error) {
     console.error('获取邮件模板失败:', error)
   } finally {
     loading.value = false
   }
+}
+
+const prevPage = () => {
+  if (page.value <= 1) return
+  page.value -= 1
+  void fetchEmailTemplates()
+}
+
+const nextPage = () => {
+  if (page.value * pageSize >= total.value) return
+  page.value += 1
+  void fetchEmailTemplates()
+}
+
+/** 新增/删除后回到第一页，避免停在空页 */
+const reloadFromFirstPage = () => {
+  page.value = 1
+  void fetchEmailTemplates()
 }
 
 // 重置表单
@@ -195,7 +219,8 @@ const submitForm = async () => {
     }
 
     showModal.value = false
-    fetchEmailTemplates()
+    if (isEditMode.value) fetchEmailTemplates()
+    else reloadFromFirstPage()
   } catch (error) {
     console.error('保存模板失败:', error)
   } finally {
@@ -212,7 +237,7 @@ const confirmDelete = async () => {
     await deleteEmailTemplate(currentTemplateId.value)
     showDeleteModal.value = false
     alert(t('emailTemplates.deleteSuccess'))
-    fetchEmailTemplates()
+    reloadFromFirstPage()
   } catch (error) {
     console.error('删除模板失败:', error)
   } finally {
@@ -266,6 +291,20 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
+
+    <div class="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+      <span>共 {{ total }} 个模板，第 {{ page }} / {{ Math.max(Math.ceil(total / pageSize), 1) }} 页</span>
+      <div class="flex items-center space-x-2">
+        <button class="btn btn-secondary" :disabled="page <= 1" @click="prevPage">上一页</button>
+        <button
+          class="btn btn-secondary"
+          :disabled="page * pageSize >= total"
+          @click="nextPage"
+        >
+          下一页
+        </button>
+      </div>
+    </div>
 
     <!-- 创建/编辑模态框 -->
     <BaseModal

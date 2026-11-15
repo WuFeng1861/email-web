@@ -26,7 +26,10 @@ export default {
     emailKeys: 'Email Credentials',
     emailTemplates: 'Email Templates',
     emailSending: 'Send Email',
-    statistics: 'Statistics'
+    statistics: Statistics,
+    ipSecurity: 'IP Rules',
+    login: 'Sign in',
+    account: 'Account'
   },
   dashboard: {
     emailQueueStats: 'Email Queue Statistics',

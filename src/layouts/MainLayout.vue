@@ -5,12 +5,20 @@ import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '../stores/theme'
 import { useLangStore } from '../stores/lang'
 import SidebarMenu from '../components/SidebarMenu.vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const themeStore = useThemeStore()
 const langStore = useLangStore()
+const auth = useAuthStore()
+
+// 退出登录
+const handleLogout = async () => {
+  await auth.logout()
+  router.replace({ name: 'login' })
+}
 
 // 移动设备侧边栏显示状态
 const sidebarOpen = ref(false)
@@ -143,6 +151,15 @@ const toggleLanguage = () => {
         <div class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6">
           <h1 class="text-xl font-semibold text-gray-800 dark:text-white">{{ pageTitle }}</h1>
           <div class="flex items-center space-x-4">
+            <span v-if="auth.username" class="text-sm text-gray-500 dark:text-gray-400">
+              {{ auth.username }}
+            </span>
+            <button
+              @click="handleLogout"
+              class="text-sm text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+            >
+              退出
+            </button>
             <button 
               @click="toggleTheme" 
               class="text-gray-600 dark:text-gray-200 focus:outline-none"
