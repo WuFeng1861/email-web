@@ -7,7 +7,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
  */
 const BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-  'https://wufeng98.cn/emailServerApi/api'
+  'https://wufeng98.cn/emailServerApi2/api'
 
 /** 前端挂在 /emailWeb/ 下，登录页也在这个前缀里 */
 const APP_BASE = '/emailWeb/'

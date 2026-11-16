@@ -6,7 +6,7 @@ import DataTable from '../components/DataTable.vue'
 import BaseModal from '../components/BaseModal.vue'
 import FormInput from '../components/FormInput.vue'
 import FormSelect from '../components/FormSelect.vue'
-import { getAllEmailKeys, getEmailKey, createEmailKey, updateEmailKey, deleteEmailKey, EmailKey } from '../api/emailKeys'
+import { getAllEmailKeys, getEmailKey, createEmailKey, updateEmailKey, deleteEmailKey, verifyEmailKey, EmailKey } from '../api/emailKeys'
 
 const { t } = useI18n()
 
@@ -33,6 +33,9 @@ const formData = reactive<EmailKey>({
   emailCompany: 'QQ',
   limitCount: 1000
 })
+
+// 打开编辑时的用户名（后端返回的是掩码），用于判断用户到底有没有改过
+const originalUser = ref('')
 
 // 表单错误信息
 const formErrors = reactive({
@@ -96,6 +99,7 @@ const resetForm = () => {
   formData.app = ''
   formData.emailCompany = 'QQ'
   formData.limitCount = 1000
+  originalUser.value = ''
 
   formErrors.user = ''
   formErrors.pass = ''
@@ -119,6 +123,7 @@ const openEditModal = async (id: number) => {
     const keyData = await getEmailKey(id)
 
     formData.user = keyData.user
+    originalUser.value = keyData.user
     // 后端不再返回明文授权码，编辑时留空表示不修改
     formData.pass = ''
     formData.app = keyData.app
@@ -186,10 +191,46 @@ const submitForm = async () => {
   try {
     actionLoading.value = true
 
+    // 保存前先验一次 SMTP 登录：授权码错了当场提示，避免存进去之后发信全失败
+    let check: Awaited<ReturnType<typeof verifyEmailKey>> | null = null
+    try {
+      check = await verifyEmailKey({
+        id: isEditMode.value ? currentKeyId.value : undefined,
+        // 用户名没改过就别传：编辑时这个值后端给的是掩码，传过去认证必失败
+        user:
+          isEditMode.value && formData.user === originalUser.value
+            ? undefined
+            : formData.user,
+        pass: formData.pass?.trim() || undefined,
+        emailCompany: formData.emailCompany,
+      })
+    } catch {
+      // 校验接口自身失败（超时/网络）不阻断保存，交给发信时的错误提示
+      check = null
+    }
+
+    if (check && !check.ok) {
+      const goOn = window.confirm(
+        [
+          'SMTP 认证没通过，这份凭证保存后发信仍然会失败。',
+          '',
+          `原因：${check.message || '未知错误'}`,
+          check.host ? `服务器：${check.host}` : '',
+          '',
+          '仍要保存吗？',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      )
+      if (!goOn) return
+    }
+
     if (isEditMode.value && currentKeyId.value) {
       // 更新邮件凭证：授权码留空就不提交该字段
       const payload = { ...formData }
       if (!String(payload.pass || '').trim()) delete (payload as Partial<typeof payload>).pass
+      // 用户名没改动就别提交：后端给的是掩码，原样写回会把真实邮箱覆盖成 184***1861@163.com
+      if (payload.user === originalUser.value) delete (payload as Partial<typeof payload>).user
       await updateEmailKey(currentKeyId.value, payload)
       alert(t('emailKeys.updateSuccess'))
     } else {
@@ -275,7 +316,7 @@ onMounted(() => {
         <FormInput
           v-model="formData.user"
           :label="t('emailKeys.user')"
-          :placeholder="t('emailKeys.user')"
+          :placeholder="isEditMode ? t('emailKeys.userPlaceholderEdit') : t('emailKeys.user')"
           :error="formErrors.user"
           required
         />
@@ -284,7 +325,7 @@ onMounted(() => {
           v-model="formData.pass"
           type="password"
           :label="t('emailKeys.pass')"
-          :placeholder="isEditMode ? '留空则不修改（后端不再返回明文）' : t('emailKeys.pass')"
+          :placeholder="isEditMode ? t('emailKeys.passPlaceholderEdit') : t('emailKeys.passPlaceholderCreate')"
           :error="formErrors.pass"
           :required="!isEditMode"
         />

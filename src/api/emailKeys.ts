@@ -43,3 +43,22 @@ export const updateEmailKey = (id: number, data: Partial<EmailKey>) => {
 export const deleteEmailKey = (id: number) => {
   return api.delete(`/email-keys/${id}`)
 }
+
+export interface VerifyResult {
+  ok: boolean
+  message?: string
+  host?: string
+}
+
+/**
+ * 保存前校验 SMTP 登录（只握手不发信）。
+ * 编辑场景 pass 可省略，后端会用库里现存的授权码验证。
+ */
+export const verifyEmailKey = (data: {
+  id?: number
+  user?: string
+  pass?: string
+  emailCompany?: string
+}) => {
+  return api.post<VerifyResult>('/email-keys/verify', data)
+}
